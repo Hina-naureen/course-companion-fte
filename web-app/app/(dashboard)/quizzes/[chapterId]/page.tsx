@@ -228,7 +228,7 @@ export default function QuizPage() {
         </span>
       </div>
       <p className="text-gray-400 text-sm mb-8">
-        Passing score: {Math.round(quiz.passing_score * 100)}% ·{" "}
+        Passing score: {quiz.passing_score}% ·{" "}
         {quiz.quiz_type}
       </p>
 

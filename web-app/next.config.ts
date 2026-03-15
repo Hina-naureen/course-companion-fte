@@ -6,6 +6,7 @@ const BACKEND_URL =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: require("path").join(__dirname, "../"),
   async rewrites() {
     return [
       {

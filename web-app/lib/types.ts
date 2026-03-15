@@ -18,7 +18,8 @@ export interface TokenResponse {
 // ── Chapters ──────────────────────────────────────────────────────────────────
 
 export interface ChapterSummary {
-  id:             string;   // slug e.g. "how-llms-work"
+  id:             string;   // UUID from backend
+  slug:           string;   // human-readable slug e.g. "how-llms-work"
   number:         number;
   title:          string;
   summary:        string;
@@ -26,6 +27,7 @@ export interface ChapterSummary {
   estimated_mins: number;
   tags:           string[];
   has_quiz:       boolean;
+  locked:         boolean;
 }
 
 export interface ChapterDetail extends ChapterSummary {
