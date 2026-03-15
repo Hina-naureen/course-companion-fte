@@ -6,6 +6,9 @@ const BACKEND_URL =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // On Vercel: output .next/ to repo root so Vercel can find routes-manifest.json.
+  // Locally: keep .next/ inside web-app/ (default behaviour).
+  distDir: process.env.VERCEL ? "../.next" : ".next",
   async rewrites() {
     return [
       {

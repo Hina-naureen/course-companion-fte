@@ -1,9 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "web-app/package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "framework": "nextjs",
+  "buildCommand": "npm --prefix web-app run build",
+  "installCommand": "npm --prefix web-app install",
+  "devCommand": "npm --prefix web-app run dev"
 }
