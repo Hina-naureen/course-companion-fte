@@ -52,12 +52,24 @@ Authorization: Bearer <access_token>
     openapi_url="/openapi.json",  # used by ChatGPT Custom GPT Actions
 )
 
-# CORS — wildcard in dev, strict list in production
+# CORS — wildcard in dev; in production allow explicit list + any *.vercel.app
+def _is_allowed_origin(origin: str) -> bool:
+    if settings.debug:
+        return True
+    if origin in settings.cors_origins:
+        return True
+    # Allow any Vercel preview/production deployment
+    if origin.endswith(".vercel.app"):
+        return True
+    return False
+
 _cors_origins = ["*"] if settings.debug else settings.cors_origins
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=False if settings.debug else True,
+    allow_origin_regex=r"https://.*\.vercel\.app" if not settings.debug else None,
+    allow_credentials=not settings.debug,
     allow_methods=["*"],
     allow_headers=["*"],
 )
