@@ -1,0 +1,689 @@
+openapi: "3.1.0"
+
+info:
+  title: Course Companion FTE – Actions API
+  description: >
+    FastAPI backend for the Course Companion FTE ChatGPT Custom GPT.
+    Provides course content, quiz submission, progress tracking, and search.
+    All endpoints require a Bearer JWT token (obtained from /auth/login).
+    Zero LLM calls happen on the backend — all intelligence is in this GPT.
+  version: "1.0.0"
+
+servers:
+  - url: https://your-backend-domain.com/api/v1
+    description: Production server
+  - url: http://localhost:8000/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "student@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "securepassword123"
+
+    UserLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (1 hour expiry)
+        refresh_token:
+          type: string
+          description: JWT refresh token (7 day expiry)
+        token_type:
+          type: string
+          example: "bearer"
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        tier:
+          type: string
+          enum: [free, pro]
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ChapterSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: integer
+          description: Chapter number (1-5)
+        slug:
+          type: string
+          example: "what-is-generative-ai"
+        title:
+          type: string
+        summary:
+          type: string
+          description: One-sentence chapter description
+        estimated_mins:
+          type: integer
+          description: Estimated reading time in minutes
+        tier_required:
+          type: string
+          enum: [free, pro]
+        has_quiz:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+
+    ChapterDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChapterSummary'
+        - type: object
+          properties:
+            content_md:
+              type: string
+              description: Full chapter content in Markdown format
+
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+          description: Answer options (MCQ only, 4 items)
+        quiz_type:
+          type: string
+          enum: [mcq, open]
+
+    QuizResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        chapter_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        quiz_type:
+          type: string
+          enum: [mcq, open]
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuizQuestion'
+        passing_score:
+          type: number
+          description: Minimum score to pass (0.0 – 1.0)
+        tier_required:
+          type: string
+          enum: [free, pro]
+
+    QuizAttemptRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of question_id → selected answer (MCQ) or text answer (open)
+          example:
+            "q1": "B"
+            "q2": "Transformer architecture"
+
+    QuizAttemptResult:
+      type: object
+      properties:
+        attempt_id:
+          type: string
+          format: uuid
+        score:
+          type: number
+          description: Score as decimal (0.0 – 1.0)
+        score_percent:
+          type: integer
+          description: Score as percentage (0-100)
+        passed:
+          type: boolean
+        correct_count:
+          type: integer
+        total_questions:
+          type: integer
+        feedback:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id:
+                type: string
+              correct:
+                type: boolean
+              correct_answer:
+                type: string
+              explanation:
+                type: string
+        attempts_today:
+          type: integer
+          description: Number of attempts made today (free tier limit is 3)
+        attempts_remaining:
+          type: integer
+          description: Remaining attempts today (-1 means unlimited for Pro)
+
+    ProgressSummary:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        chapters_total:
+          type: integer
+        chapters_completed:
+          type: integer
+        chapters_started:
+          type: integer
+        completion_percent:
+          type: integer
+        chapters_completed_count:
+          type: integer
+        quizzes_passed:
+          type: integer
+        overall_score_avg:
+          type: number
+          nullable: true
+        chapters:
+          type: array
+          items:
+            type: object
+            properties:
+              chapter_id:
+                type: string
+              chapter_number:
+                type: integer
+              chapter_title:
+                type: string
+              status:
+                type: string
+                enum: [not_started, in_progress, completed]
+              started_at:
+                type: string
+                format: date-time
+                nullable: true
+              completed_at:
+                type: string
+                format: date-time
+                nullable: true
+
+    SearchResult:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              chapter_id:
+                type: string
+              chapter_number:
+                type: integer
+              title:
+                type: string
+              excerpt:
+                type: string
+                description: Relevant excerpt with search terms highlighted
+              relevance_score:
+                type: number
+        total:
+          type: integer
+        searches_today:
+          type: integer
+        searches_remaining:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+
+paths:
+
+  # ── Authentication ─────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      summary: Create a new user account
+      description: Register with email and password. Returns JWT token pair immediately — no email verification required.
+      security: []
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        "201":
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        "400":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      summary: Login and get JWT tokens
+      description: Authenticate with email and password. Returns access token (1h) and refresh token (7d).
+      security: []
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Refresh access token
+      description: Exchange a valid refresh token for a new access token.
+      security: []
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Get current user profile
+      description: Returns the authenticated user's profile including tier (free|pro).
+      tags: [Authentication]
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        "401":
+          description: Invalid or expired token
+
+  # ── Chapters ───────────────────────────────────────────────────────────────
+
+  /chapters:
+    get:
+      operationId: listChapters
+      summary: List all available chapters
+      description: >
+        Returns all chapters the user can access based on their tier.
+        Free users see chapters 1-3. Pro users see all 5 chapters.
+        Use this to show the course curriculum or check what's available.
+      tags: [Chapters]
+      responses:
+        "200":
+          description: List of chapter summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chapters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChapterSummary'
+                  total:
+                    type: integer
+                  user_tier:
+                    type: string
+
+  /chapters/{chapter_id}:
+    get:
+      operationId: getChapter
+      summary: Get full chapter content
+      description: >
+        Returns the complete chapter including full markdown content.
+        Free users can only access chapters 1-3. Returns 403 for locked chapters.
+        Call this when the user wants to read a specific chapter.
+      tags: [Chapters]
+      parameters:
+        - name: chapter_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chapter UUID or slug (e.g. "what-is-generative-ai")
+      responses:
+        "200":
+          description: Full chapter detail with content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterDetail'
+        "403":
+          description: Pro tier required
+        "404":
+          description: Chapter not found
+
+  /chapters/{chapter_id}/quiz:
+    get:
+      operationId: getChapterQuiz
+      summary: Get quiz for a chapter
+      description: >
+        Returns the quiz questions for a chapter (answers stripped).
+        Free users only see MCQ questions. Pro users see all question types.
+        Call this when the user says "take the quiz" or "test my knowledge".
+      tags: [Chapters]
+      parameters:
+        - name: chapter_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Quiz questions (answers not included)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+        "404":
+          description: No quiz for this chapter
+
+  # ── Quizzes ────────────────────────────────────────────────────────────────
+
+  /quizzes/{quiz_id}/attempt:
+    post:
+      operationId: submitQuizAttempt
+      summary: Submit quiz answers and get results
+      description: >
+        Submit answers for a quiz and receive a scored result with feedback.
+        Grading is entirely rule-based — no LLM required.
+        Free users limited to 3 attempts per quiz per day.
+        Returns per-question feedback with correct answers and explanations.
+      tags: [Quizzes]
+      parameters:
+        - name: quiz_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizAttemptRequest'
+      responses:
+        "200":
+          description: Quiz results with per-question feedback
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizAttemptResult'
+        "429":
+          description: Daily attempt limit reached (free tier)
+
+  /quizzes/{quiz_id}/attempts:
+    get:
+      operationId: getQuizAttempts
+      summary: Get attempt history for a quiz
+      description: Returns the user's previous attempts for a specific quiz, ordered by most recent first.
+      tags: [Quizzes]
+      parameters:
+        - name: quiz_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of previous attempts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    attempt_id:
+                      type: string
+                    score:
+                      type: number
+                    score_percent:
+                      type: integer
+                    passed:
+                      type: boolean
+                    attempted_at:
+                      type: string
+                      format: date-time
+
+  # ── Progress ───────────────────────────────────────────────────────────────
+
+  /progress:
+    get:
+      operationId: getProgress
+      summary: Get overall course progress summary
+      description: >
+        Returns completion percentage, chapter statuses, and quiz statistics.
+        Use this when the user asks "how am I doing", "my progress", or "what's next".
+      tags: [Progress]
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressSummary'
+
+  /progress/chapters/{chapter_id}:
+    put:
+      operationId: updateChapterProgress
+      summary: Update chapter reading status
+      description: >
+        Mark a chapter as in_progress (when user starts reading) or completed (when done).
+        Use status="in_progress" when user opens a chapter, "completed" when they finish.
+      tags: [Progress]
+      parameters:
+        - name: chapter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [not_started, in_progress, completed]
+      responses:
+        "200":
+          description: Progress updated
+
+  /progress/analytics:
+    get:
+      operationId: getProgressAnalytics
+      summary: Get detailed progress analytics (Pro only)
+      description: Returns detailed analytics including average quiz scores, completion streak, and time spent. Pro tier required.
+      tags: [Progress]
+      responses:
+        "200":
+          description: Detailed analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avg_quiz_score:
+                    type: number
+                  best_quiz_score:
+                    type: number
+                  quizzes_passed:
+                    type: integer
+                  quizzes_failed:
+                    type: integer
+                  chapters_completed:
+                    type: integer
+                  total_time_mins:
+                    type: integer
+                  current_streak_days:
+                    type: integer
+        "403":
+          description: Pro tier required
+
+  # ── Search ─────────────────────────────────────────────────────────────────
+
+  /search:
+    get:
+      operationId: searchChapters
+      summary: Full-text search across all chapters
+      description: >
+        Search chapter content using PostgreSQL full-text search (pg_tsvector).
+        Returns ranked results with relevant excerpts.
+        Free users limited to 10 searches per day.
+        Use this when the user asks to find information or says "search for...".
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Search query (e.g. "attention mechanism", "RAG", "fine-tuning")
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+            maximum: 20
+      responses:
+        "200":
+          description: Search results with excerpts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+        "429":
+          description: Daily search limit reached (free tier)
+
+  # ── Health ─────────────────────────────────────────────────────────────────
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: API health check
+      description: Returns server status and which phase is active.
+      security: []
+      tags: [Utility]
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  phase:
+                    type: integer
+                    example: 1
+                  skills_enabled:
+                    type: boolean
+                    example: false

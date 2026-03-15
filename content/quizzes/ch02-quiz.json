@@ -1,0 +1,70 @@
+{
+  "chapter_slug": "how-llms-work",
+  "chapter_number": 2,
+  "title": "Chapter 2 Quiz: How Large Language Models Work",
+  "quiz_type": "mcq",
+  "tier_required": "free",
+  "passing_score": 60,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is a 'token' in the context of LLMs?",
+      "options": [
+        { "id": "a", "text": "A security password used to access the API" },
+        { "id": "b", "text": "A small chunk of text (roughly 3–4 characters) that the model processes" },
+        { "id": "c", "text": "A single complete word in the model's vocabulary" },
+        { "id": "d", "text": "The final output message from the model" }
+      ],
+      "correct_option": "b",
+      "explanation": "Tokens are the fundamental units LLMs process. A token is roughly 3–4 characters or about ¾ of an average word. The word 'fascinating' might be split into 'fasci' and 'nating'. This is why API pricing is measured in tokens, not words."
+    },
+    {
+      "id": "q2",
+      "text": "What is the purpose of 'embeddings' in an LLM pipeline?",
+      "options": [
+        { "id": "a", "text": "To store the model's responses in a permanent database" },
+        { "id": "b", "text": "To convert tokens into numerical vectors that capture meaning and relationships" },
+        { "id": "c", "text": "To split long documents into smaller sentences" },
+        { "id": "d", "text": "To translate text between different human languages" }
+      ],
+      "correct_option": "b",
+      "explanation": "Embeddings map tokens into high-dimensional numerical vectors where meaning is encoded geometrically. Words with similar meanings have similar vectors — 'dog' and 'puppy' will be close together. This representation is what allows the model to reason about language."
+    },
+    {
+      "id": "q3",
+      "text": "What does 'self-attention' allow a transformer to do?",
+      "options": [
+        { "id": "a", "text": "Memorise entire documents verbatim for later retrieval" },
+        { "id": "b", "text": "Generate images from text descriptions" },
+        { "id": "c", "text": "Understand relationships between all words in a sentence simultaneously" },
+        { "id": "d", "text": "Search the internet for relevant information in real time" }
+      ],
+      "correct_option": "c",
+      "explanation": "Self-attention calculates the relevance of every word to every other word in the input simultaneously — unlike older RNN models that processed words one at a time. This is what lets the model resolve pronouns, understand context, and handle long-range dependencies."
+    },
+    {
+      "id": "q4",
+      "text": "What is RLHF (Reinforcement Learning from Human Feedback)?",
+      "options": [
+        { "id": "a", "text": "A technique where the model trains itself using automated rewards only" },
+        { "id": "b", "text": "A process where human raters score responses to make the model more helpful and safe" },
+        { "id": "c", "text": "A method for compressing model weights to reduce memory usage" },
+        { "id": "d", "text": "A way to extend the model's context window beyond its training limit" }
+      ],
+      "correct_option": "b",
+      "explanation": "RLHF is the key step that turns a next-token predictor into a helpful assistant. Human reviewers rate model responses, and those ratings are used to train a 'reward model' that guides the LLM toward outputs that humans prefer — making it more helpful, honest, and less harmful."
+    },
+    {
+      "id": "q5",
+      "text": "Why do two responses to the same prompt sometimes differ significantly?",
+      "options": [
+        { "id": "a", "text": "The model connects to a different server with different weights each time" },
+        { "id": "b", "text": "The user's internet connection speed affects the output quality" },
+        { "id": "c", "text": "Token selection is probabilistic — the model samples from a distribution, not always picking the top token" },
+        { "id": "d", "text": "The model randomly shuffles its training data at the start of each session" }
+      ],
+      "correct_option": "c",
+      "explanation": "At each step, the model produces a probability distribution over all possible next tokens. A parameter called 'temperature' controls how randomly the model samples from this distribution. Higher temperature = more variation and creativity. This is intentional — pure greedy selection (always picking the top token) produces repetitive, boring outputs."
+    }
+  ]
+}

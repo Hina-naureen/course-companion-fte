@@ -1,0 +1,70 @@
+{
+  "chapter_slug": "what-is-generative-ai",
+  "chapter_number": 1,
+  "title": "Chapter 1 Quiz: What is Generative AI?",
+  "quiz_type": "mcq",
+  "tier_required": "free",
+  "passing_score": 60,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is the main difference between traditional AI and generative AI?",
+      "options": [
+        { "id": "a", "text": "Traditional AI uses more data than generative AI" },
+        { "id": "b", "text": "Traditional AI classifies existing data; generative AI creates new content" },
+        { "id": "c", "text": "Generative AI can only work with text" },
+        { "id": "d", "text": "Traditional AI is always more accurate" }
+      ],
+      "correct_option": "b",
+      "explanation": "Traditional AI answers 'which category does this belong to?' — a discriminative task. Generative AI answers 'what should come next?' — creating original content rather than classifying existing data."
+    },
+    {
+      "id": "q2",
+      "text": "Which of the following is the best example of generative AI in action?",
+      "options": [
+        { "id": "a", "text": "A spam filter moving an email to your junk folder" },
+        { "id": "b", "text": "A recommendation engine suggesting a Netflix show" },
+        { "id": "c", "text": "A chatbot writing a cover letter from your bullet points" },
+        { "id": "d", "text": "A fraud detection system flagging a suspicious transaction" }
+      ],
+      "correct_option": "c",
+      "explanation": "Writing a cover letter is a generative task — producing new content that didn't exist before. The other options are all classification or prediction tasks — traditional AI territory."
+    },
+    {
+      "id": "q3",
+      "text": "How does a large language model (like ChatGPT) produce a response?",
+      "options": [
+        { "id": "a", "text": "It searches the internet for the closest matching answer" },
+        { "id": "b", "text": "It generates text word by word based on learned patterns" },
+        { "id": "c", "text": "It retrieves a pre-written answer from a database" },
+        { "id": "d", "text": "It asks human operators to approve each response" }
+      ],
+      "correct_option": "b",
+      "explanation": "LLMs generate responses token by token (word fragment by word fragment), each step predicting what statistically fits best given all the context. There is no database lookup or internet search involved in the base model."
+    },
+    {
+      "id": "q4",
+      "text": "Which type of generative AI would you use to create a logo from a text description?",
+      "options": [
+        { "id": "a", "text": "A large language model" },
+        { "id": "b", "text": "A code generation model" },
+        { "id": "c", "text": "An image generation model" },
+        { "id": "d", "text": "An audio generation model" }
+      ],
+      "correct_option": "c",
+      "explanation": "Image generation models (like DALL·E, Midjourney, and Stable Diffusion) create visual content from text descriptions. Each type of generative AI specialises in a different output modality."
+    },
+    {
+      "id": "q5",
+      "text": "What primarily changed around 2022–2023 that made generative AI go mainstream?",
+      "options": [
+        { "id": "a", "text": "AI was invented for the first time" },
+        { "id": "b", "text": "Governments mandated AI adoption in businesses" },
+        { "id": "c", "text": "Models became large enough to be genuinely useful and interfaces became easy for anyone to use" },
+        { "id": "d", "text": "Generative AI became completely free for all users globally" }
+      ],
+      "correct_option": "c",
+      "explanation": "Generative AI research had been ongoing for years. What drove mass adoption was the combination of scale (models became capable enough to be reliably useful) and accessibility (conversational interfaces removed the technical barrier)."
+    }
+  ]
+}

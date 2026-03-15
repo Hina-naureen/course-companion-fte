@@ -1,0 +1,83 @@
+# ── Secrets & environment ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+*.secret
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.log
+
+# ── SQLite (dev only — use PostgreSQL in production) ──────────────────────────
+*.db
+*.sqlite3
+*.sqlite
+
+# ── Alembic generated files (keep versions/, ignore caches) ───────────────────
+backend/migrations/__pycache__/
+backend/migrations/versions/__pycache__/
+
+# ── Node.js / Next.js ─────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+dist/
+build/
+.vercel/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Generated audio files (runtime output) ────────────────────────────────────
+backend/static/audio/
+static/audio/
+
+# ── OS & editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── Claude Code internal files ────────────────────────────────────────────────
+.claude/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+.cache/
+# Root-level lock file (no package.json at root)
+/package-lock.json

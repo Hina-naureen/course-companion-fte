@@ -1,0 +1,70 @@
+{
+  "chapter_slug": "building-with-generative-ai",
+  "chapter_number": 5,
+  "title": "Chapter 5 Quiz: Building with Generative AI",
+  "quiz_type": "mcq",
+  "tier_required": "free",
+  "passing_score": 60,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is an AI API?",
+      "options": [
+        { "id": "a", "text": "A training dataset used to build and improve an AI model" },
+        { "id": "b", "text": "A way for your application to communicate with an AI model hosted on a remote server" },
+        { "id": "c", "text": "A type of database that stores and indexes AI-generated content" },
+        { "id": "d", "text": "A security system that prevents AI models from being misused" }
+      ],
+      "correct_option": "b",
+      "explanation": "An API (Application Programming Interface) lets your application send requests to an AI model running on a remote server and receive responses. You don't need to run the model yourself — you pay per use. This is how virtually every AI-powered product is built: your app calls the API; the AI provider handles the model infrastructure."
+    },
+    {
+      "id": "q2",
+      "text": "What problem does RAG (Retrieval-Augmented Generation) primarily solve?",
+      "options": [
+        { "id": "a", "text": "It makes AI responses more creative and less predictable" },
+        { "id": "b", "text": "It allows AI to accurately answer questions about specific documents it wasn't trained on" },
+        { "id": "c", "text": "It permanently trains the model on your private company data" },
+        { "id": "d", "text": "It reduces the number of tokens the model generates per response" }
+      ],
+      "correct_option": "b",
+      "explanation": "RAG solves two core limitations: the model's training cutoff (it doesn't know about recent events or your specific documents) and its finite context window (it can't read an entire knowledge base at once). RAG retrieves the most relevant documents at query time and includes them as context in the prompt — enabling accurate, up-to-date answers grounded in your actual data."
+    },
+    {
+      "id": "q3",
+      "text": "What makes an AI 'agent' different from a standard chatbot?",
+      "options": [
+        { "id": "a", "text": "Agents are always significantly more expensive to run than chatbots" },
+        { "id": "b", "text": "Agents can only process text, while chatbots can handle images too" },
+        { "id": "c", "text": "Agents can take actions in the world — searching, executing code, calling APIs — to autonomously achieve goals" },
+        { "id": "d", "text": "Agents operate without any system prompt or instruction" }
+      ],
+      "correct_option": "c",
+      "explanation": "A chatbot responds to one message at a time. An agent operates in a loop: given a goal, it decides which tool to use, uses it, observes the result, and decides the next step — repeating until the goal is complete. GitHub Copilot Workspace reading a bug report, writing a fix, running tests, and opening a PR is an agent workflow."
+    },
+    {
+      "id": "q4",
+      "text": "A company wants their customer support AI to answer using only their product documentation. What is the best approach?",
+      "options": [
+        { "id": "a", "text": "Fine-tune the model on the product documentation so it permanently learns the content" },
+        { "id": "b", "text": "Paste the entire documentation into the system prompt for every conversation" },
+        { "id": "c", "text": "Implement RAG: store docs in a searchable database and retrieve relevant sections at query time" },
+        { "id": "d", "text": "Switch to a larger, more knowledgeable model that might already know the product" }
+      ],
+      "correct_option": "c",
+      "explanation": "RAG is the standard, proven solution. Fine-tuning teaches the model style and format, not facts — it doesn't reliably make the model cite your specific documentation accurately. Pasting entire documentation into the system prompt is too expensive and still won't cover everything. RAG retrieves exactly what's needed for each query, keeping answers grounded and up to date."
+    },
+    {
+      "id": "q5",
+      "text": "Why is streaming important for user-facing AI chat applications?",
+      "options": [
+        { "id": "a", "text": "Streaming reduces the API cost per token generated" },
+        { "id": "b", "text": "Streaming makes responses more factually accurate" },
+        { "id": "c", "text": "Streaming displays text as it is generated, making the experience feel faster and more responsive" },
+        { "id": "d", "text": "Streaming allows the model to access real-time internet data during generation" }
+      ],
+      "correct_option": "c",
+      "explanation": "A long AI response can take 5–10 seconds to complete. Without streaming, users stare at a blank screen or spinner. With streaming, the first words appear within milliseconds and text flows in word by word — the same pattern users see in ChatGPT and Claude. Perceived latency drops dramatically even though actual completion time is the same. This UX difference is significant enough that virtually every production AI chat product uses streaming."
+    }
+  ]
+}

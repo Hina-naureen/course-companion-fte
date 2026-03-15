@@ -1,0 +1,70 @@
+{
+  "chapter_slug": "ai-ethics-and-responsible-use",
+  "chapter_number": 4,
+  "title": "Chapter 4 Quiz: AI Ethics and Responsible Use",
+  "quiz_type": "mcq",
+  "tier_required": "free",
+  "passing_score": 60,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is an AI 'hallucination'?",
+      "options": [
+        { "id": "a", "text": "When the AI generates disturbing or surreal imagery unexpectedly" },
+        { "id": "b", "text": "When the AI produces confident-sounding but factually incorrect information" },
+        { "id": "c", "text": "When the model becomes overloaded and stops generating responses" },
+        { "id": "d", "text": "When the AI reproduces text copied verbatim from its training data" }
+      ],
+      "correct_option": "b",
+      "explanation": "Hallucinations occur because LLMs generate statistically plausible text rather than retrieving verified facts. The model may produce convincing but completely invented citations, statistics, or events. This is a structural limitation — the model has no internal fact-checker — which is why verifying AI outputs is essential for any high-stakes use."
+    },
+    {
+      "id": "q2",
+      "text": "Why does AI bias occur in large language models?",
+      "options": [
+        { "id": "a", "text": "The engineers who build LLMs deliberately introduce biased examples" },
+        { "id": "b", "text": "AI models generate prejudiced responses randomly to test users" },
+        { "id": "c", "text": "Models are trained on human-generated data that reflects existing human biases" },
+        { "id": "d", "text": "Bias is mathematically introduced during the tokenisation step" }
+      ],
+      "correct_option": "c",
+      "explanation": "LLMs are trained on human-generated content — books, websites, articles. That content reflects the biases, assumptions, and inequalities of the societies that produced it. The model learns and reproduces those patterns. This is why AI bias requires active auditing, not just good intentions from engineers."
+    },
+    {
+      "id": "q3",
+      "text": "A startup is building an AI tool to rank job applicants. What is the most important ethical step before launch?",
+      "options": [
+        { "id": "a", "text": "Ensure the AI was trained on the largest possible dataset" },
+        { "id": "b", "text": "Audit the model's outputs for bias across gender, ethnicity, and age groups" },
+        { "id": "c", "text": "Verify that the AI processes applications faster than human recruiters" },
+        { "id": "d", "text": "Use the AI to also write the job descriptions for consistency" }
+      ],
+      "correct_option": "b",
+      "explanation": "AI in hiring decisions is high-stakes. Historical hiring data often reflects historical discrimination. Before deploying any AI in consequential decisions about people, you must audit its outputs across protected characteristics to ensure it doesn't systematically disadvantage any group — as Amazon discovered too late with their AI hiring tool."
+    },
+    {
+      "id": "q4",
+      "text": "An employee pastes a client's confidential contract into a free public AI chatbot for summarisation. What is the primary risk?",
+      "options": [
+        { "id": "a", "text": "The AI will unilaterally alter the contract terms in the summary" },
+        { "id": "b", "text": "The AI will share the contract directly with the client's competitors" },
+        { "id": "c", "text": "The confidential data may be transmitted to and stored by the AI provider's servers" },
+        { "id": "d", "text": "The AI summary will always be factually inaccurate for legal documents" }
+      ],
+      "correct_option": "c",
+      "explanation": "When you use a public AI tool, your input is sent to the provider's servers. Free-tier tools often retain input data and may use it to improve the model. Pasting confidential client information into a consumer chatbot may violate your firm's data policies, client confidentiality agreements, and data protection regulations like GDPR."
+    },
+    {
+      "id": "q5",
+      "text": "Which of the following best describes a 'deepfake'?",
+      "options": [
+        { "id": "a", "text": "An AI model that gives fake-sounding but accurate responses" },
+        { "id": "b", "text": "A photo filter that makes people look different for entertainment" },
+        { "id": "c", "text": "AI-generated video or audio that realistically depicts a real person saying or doing something they never did" },
+        { "id": "d", "text": "A type of hallucination that only affects image generation models" }
+      ],
+      "correct_option": "c",
+      "explanation": "Deepfakes use generative AI — specifically models trained on video and audio of real people — to synthesise realistic media depicting that person in fabricated situations. They are used for fraud (impersonating executives), political disinformation, and non-consensual intimate imagery. The $25M Hong Kong fraud case demonstrates their real-world danger."
+    }
+  ]
+}

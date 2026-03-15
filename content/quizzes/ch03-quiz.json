@@ -1,0 +1,70 @@
+{
+  "chapter_slug": "prompt-engineering",
+  "chapter_number": 3,
+  "title": "Chapter 3 Quiz: Prompt Engineering",
+  "quiz_type": "mcq",
+  "tier_required": "free",
+  "passing_score": 60,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is a 'prompt' in the context of generative AI?",
+      "options": [
+        { "id": "a", "text": "A suggestion the AI makes to the user to continue the conversation" },
+        { "id": "b", "text": "The input — question, instruction, or context — that you give to an AI model" },
+        { "id": "c", "text": "A pre-written template stored permanently in the model's memory" },
+        { "id": "d", "text": "The system configuration file that controls an AI model's hardware" }
+      ],
+      "correct_option": "b",
+      "explanation": "A prompt is your input to the model — anything you type or send to initiate or continue a generation. The quality of your prompt directly determines the quality of the output, which is why prompt engineering is a valuable skill."
+    },
+    {
+      "id": "q2",
+      "text": "A developer wants the AI to classify support tickets using exactly the labels 'Bug', 'Feature Request', and 'Billing'. What prompting technique is most effective?",
+      "options": [
+        { "id": "a", "text": "Zero-shot prompting with a clear description of the labels" },
+        { "id": "b", "text": "Few-shot prompting with 2–3 labelled examples of each category" },
+        { "id": "c", "text": "Chain-of-thought prompting asking the model to think step by step" },
+        { "id": "d", "text": "Writing a system prompt that describes the model's personality" }
+      ],
+      "correct_option": "b",
+      "explanation": "Few-shot prompting is ideal for format-sensitive classification tasks. Showing concrete examples ('Ticket: App crashes on login → Bug') is more reliable than describing the categories in words. The model learns the exact pattern from your examples."
+    },
+    {
+      "id": "q3",
+      "text": "When should you use chain-of-thought prompting?",
+      "options": [
+        { "id": "a", "text": "When you need the AI response to be as short as possible" },
+        { "id": "b", "text": "When you want to generate creative images from text" },
+        { "id": "c", "text": "When the task involves multi-step reasoning, mathematics, or logical analysis" },
+        { "id": "d", "text": "When you are writing a system prompt to configure a chatbot's personality" }
+      ],
+      "correct_option": "c",
+      "explanation": "Adding 'think step by step' or 'let's work through this carefully' forces the model to reason before concluding. This dramatically improves accuracy on maths problems, logical puzzles, and multi-step analysis tasks by preventing the model from jumping to incorrect conclusions."
+    },
+    {
+      "id": "q4",
+      "text": "What is a system prompt?",
+      "options": [
+        { "id": "a", "text": "The first message a user sends to start a new conversation" },
+        { "id": "b", "text": "An instruction that sets the AI's overall behaviour before the conversation begins" },
+        { "id": "c", "text": "A security key required to authenticate API requests" },
+        { "id": "d", "text": "The model's internal chain-of-thought during token generation" }
+      ],
+      "correct_option": "b",
+      "explanation": "A system prompt is a persistent instruction applied before any user messages. It defines the AI's role, constraints, and behaviour for the entire session. It's how companies turn a general-purpose model into a specialised product — a customer service bot, a coding assistant, a tutoring system — without any extra model training."
+    },
+    {
+      "id": "q5",
+      "text": "A user asks for a recipe and gets a long unformatted paragraph. They wanted a numbered step-by-step list. What is the most effective fix?",
+      "options": [
+        { "id": "a", "text": "Switch to a different, more powerful AI model" },
+        { "id": "b", "text": "Restart the conversation and ask a simpler question" },
+        { "id": "c", "text": "Add explicit format instructions: 'Present this as a numbered step-by-step list'" },
+        { "id": "d", "text": "Give the response a low rating so the model learns from this session" }
+      ],
+      "correct_option": "c",
+      "explanation": "Explicit format instructions are the most reliable way to control output structure. AI models don't read your mind — they respond to what you specify. Adding 'as a numbered list', 'in bullet points', 'in a table', or 'in 3 paragraphs' directly into your prompt consistently produces the format you need."
+    }
+  ]
+}
