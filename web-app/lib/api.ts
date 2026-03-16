@@ -23,7 +23,10 @@ import type {
   GenerateCourseResponse,
 } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+// Use NEXT_PUBLIC_API_URL for explicit overrides (e.g. local dev direct calls).
+// Defaults to /api/v1 (relative) so Vercel's rewrite proxy forwards to the backend —
+// no CORS config required on the backend for Vercel traffic.
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 export const api = axios.create({
   baseURL: BASE,
