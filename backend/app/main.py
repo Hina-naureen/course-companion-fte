@@ -52,27 +52,27 @@ Authorization: Bearer <access_token>
     openapi_url="/openapi.json",  # used by ChatGPT Custom GPT Actions
 )
 
-# CORS — wildcard in dev; in production allow explicit list + any *.vercel.app
-def _is_allowed_origin(origin: str) -> bool:
-    if settings.debug:
-        return True
-    if origin in settings.cors_origins:
-        return True
-    # Allow any Vercel preview/production deployment
-    if origin.endswith(".vercel.app"):
-        return True
-    return False
-
-_cors_origins = ["*"] if settings.debug else settings.cors_origins
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app" if not settings.debug else None,
-    allow_credentials=not settings.debug,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS:
+#   debug=True  → wildcard origins, no credentials (browser-safe for localhost)
+#   debug=False → explicit list + regex covers all *.vercel.app preview/prod URLs
+if settings.debug:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        # Covers every Vercel preview/production deployment automatically
+        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 # Phase 1 routers
 API_PREFIX = "/api/v1"
 app.include_router(auth.router,        prefix=API_PREFIX)
