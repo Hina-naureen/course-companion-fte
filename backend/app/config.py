@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
-    # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/course_companion"
+    # Database — defaults to SQLite for zero-config local dev and Render free tier.
+    # For production PostgreSQL set DATABASE_URL=postgresql://... (auto-converted to +asyncpg).
+    database_url: str = "sqlite+aiosqlite:///./course_companion.db"
 
     @field_validator("database_url", mode="before")
     @classmethod

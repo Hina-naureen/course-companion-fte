@@ -21,9 +21,15 @@ _STATIC_AUDIO.mkdir(parents=True, exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create all tables on startup (use Alembic in production)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables ready")
+    except Exception as exc:
+        # Log but don't crash — /docs and /health still work; DB endpoints return 500
+        logger.error("Database unavailable at startup: %s", exc)
     yield
     await engine.dispose()
 
