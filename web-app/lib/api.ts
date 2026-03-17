@@ -30,7 +30,7 @@ import {
   DEMO_CHAPTERS,
   DEMO_CHAPTER_CONTENT,
   DEMO_QUIZ_DATA,
-  DEMO_QUIZ_RESULT,
+  DEMO_QUIZ_RESULTS,
   DEMO_PROGRESS_SUMMARY,
   DEMO_ANALYTICS,
 } from "./demo";
@@ -235,8 +235,8 @@ if (DEMO_MODE) {
     return ok({ ...ch, content_md: DEMO_CHAPTER_CONTENT[ch.id] ?? "# Demo Chapter\n\nContent coming soon.", updated_at: new Date().toISOString() } as ChapterDetail);
   };
 
-  quizApi.get    = (chapterId: string) => ok((DEMO_QUIZ_DATA[chapterId] ?? DEMO_QUIZ_DATA["ch1"]) as QuizPublic);
-  quizApi.submit = () => ok(DEMO_QUIZ_RESULT as QuizResult);
+  quizApi.get    = (chapterId: string) => ok((DEMO_QUIZ_DATA[chapterId]    ?? DEMO_QUIZ_DATA["ch1"])    as QuizPublic);
+  quizApi.submit = (chapterId: string) => ok((DEMO_QUIZ_RESULTS[chapterId] ?? DEMO_QUIZ_RESULTS["ch1"]) as QuizResult);
 
   progressApi.summary   = () => ok(DEMO_PROGRESS_SUMMARY as ProgressSummary);
   progressApi.analytics = () => ok(DEMO_ANALYTICS as ProgressAnalytics);
