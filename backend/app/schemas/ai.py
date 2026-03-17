@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 
 
 class TutorRequest(BaseModel):
-    chapter_id: str
-    question: str = Field(..., min_length=3, max_length=500)
+    chapter_id: str = Field(..., min_length=1, description="Chapter slug or UUID (e.g. 'intro-to-generative-ai-1')")
+    question:   str = Field(..., min_length=3, max_length=500, description="Your question about the chapter")
 
 
 class TutorResponse(BaseModel):

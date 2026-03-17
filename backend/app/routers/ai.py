@@ -91,7 +91,17 @@ async def ai_tutor(
         chapter = result.scalar_one_or_none()
 
     if chapter is None:
-        raise HTTPException(status_code=404, detail="Chapter not found")
+        slug_rows = await db.execute(select(Chapter.slug))
+        available = [r[0] for r in slug_rows.fetchall()]
+        log.warning("Chapter '%s' not found. Available slugs: %s", body.chapter_id, available)
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "Invalid chapter slug",
+                "chapter_id": body.chapter_id,
+                "available_slugs": available,
+            },
+        )
 
     # ── Generate text answer: Gemini → OpenAI → Claude ───────────────────────
     answer: str | None = None

@@ -10,7 +10,7 @@ from app.models.quiz import Quiz
 from app.models.user import User
 from app.schemas.chapter import ChapterSummary, ChapterDetail, ChapterListResponse
 from app.schemas.quiz import QuizPublic, QuizQuestion, QuizOption
-from app.middleware.auth import get_current_user
+from app.middleware.auth import get_current_user, get_optional_user
 from app.config import get_settings
 
 router = APIRouter(prefix="/chapters", tags=["chapters"])
@@ -37,7 +37,7 @@ async def list_chapters(
     limit: int = Query(20, ge=1, le=50),
     tag: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
 ):
     query = select(Chapter).order_by(Chapter.number)
     if tag:
@@ -69,7 +69,7 @@ async def list_chapters(
             estimated_mins=ch.estimated_mins,
             tags=ch.tags,
             has_quiz=ch.id in chapters_with_quizzes,
-            locked=_is_locked(ch, current_user),
+            locked=_is_locked(ch, current_user) if current_user else ch.tier_required == "pro",
         )
         summaries.append(summary)
 
