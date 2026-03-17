@@ -509,14 +509,13 @@ export default function AITeacher({ chapterId }: Props) {
         ? (rawDetail as { msg: string }[]).map((e) => e.msg).join(", ")
         : typeof rawDetail === "string" ? rawDetail : undefined;
       let msg: string;
-      if (status === 404)              msg = "AI tutor is not available in this demo. Upgrade to the full version to chat with Aria.";
-      else if (status === 422)         msg = `Invalid request — ${detail ?? "please rephrase your question."}`;
+      if (status === 422)              msg = `Invalid request — ${detail ?? "please rephrase your question."}`;
       else if (status === 402 || status === 429) msg = "You've reached the usage limit. Please upgrade to continue.";
       else if (status === 503)         msg = "Aria is temporarily unavailable. Please try again in a moment.";
       else if (status === 500)         msg = "Something went wrong on our end. Please try again.";
       else if (status === 401 || status === 403) msg = "Session expired — please log in again.";
-      else if (!status)                msg = "Cannot reach Aria right now. Please check your connection and try again.";
-      else                             msg = "Something went wrong. Please try again.";
+      else if (!status)                msg = "Cannot reach Aria right now. Make sure the backend is running.";
+      else                             msg = "Aria couldn't respond right now. Please try again.";
       setError(msg);
       setMessages((p) => p.slice(0, -1));
       setInput(question);
