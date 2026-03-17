@@ -1,30 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { quizApi } from "@/lib/api";
 import { KEYS } from "@/lib/query-client";
 import { QuizPageSkeleton } from "@/components/skeletons";
 import type { QuizPublic, QuizResult } from "@/lib/types";
 
-export default function QuizPage() {
-  const { chapterId } = useParams<{ chapterId: string }>();
+const QUIZ_DURATION_SECS = 120; // 2 minutes
 
+export default function QuizPage() {
+  const { chapterId }  = useParams<{ chapterId: string }>();
+  const queryClient    = useQueryClient();
+
+  const [retryKey,    setRetryKey]    = useState(0);
   const [answers,     setAnswers]     = useState<Record<string, string>>({});
   const [result,      setResult]      = useState<QuizResult | null>(null);
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [timeLeft,    setTimeLeft]    = useState(QUIZ_DURATION_SECS);
 
-  // React Query caches quiz data — revisiting the page after answering and
-  // going back skips the network call.
+  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittedRef = useRef(false);
+
+  // New quiz set each open (staleTime 0 + retryKey forces a fresh fetch)
   const { data: quiz, isLoading, isError } = useQuery<QuizPublic>({
-    queryKey: KEYS.quiz(chapterId ?? ""),
+    queryKey: [...KEYS.quiz(chapterId ?? ""), retryKey],
     queryFn:  () => quizApi.get(chapterId!).then((r) => r.data),
     enabled:  !!chapterId,
-    staleTime: 10 * 60 * 1000, // quiz questions don't change often
+    staleTime: 0,
+    gcTime:    0,
   });
+
+  // ── Submit helper (shared by button and auto-submit) ────────────────────────
+
+  const doSubmit = useCallback(async (currentAnswers: Record<string, string>) => {
+    if (!quiz || submittedRef.current) return;
+    submittedRef.current = true;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSubmitting(true);
+    try {
+      const { data } = await quizApi.submit(chapterId, currentAnswers);
+      setResult(data);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? "Failed to submit quiz. Please try again.";
+      setSubmitError(message);
+      submittedRef.current = false; // allow retry on network error
+    } finally {
+      setSubmitting(false);
+    }
+  }, [quiz, chapterId]);
+
+  // ── Countdown timer ─────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!quiz || result) return; // don't start until quiz is loaded, stop after submit
+
+    submittedRef.current = false;
+    setTimeLeft(QUIZ_DURATION_SECS);
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          // Auto-submit with whatever answers were given
+          setAnswers((a) => { doSubmit(a); return a; });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz]); // restart timer whenever a new quiz set loads
+
+  // ── UI helpers ──────────────────────────────────────────────────────────────
 
   function handleSelect(questionId: string, optionId: string) {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -32,7 +87,6 @@ export default function QuizPage() {
 
   async function handleSubmit() {
     if (!quiz) return;
-
     const unanswered = quiz.questions.filter((q) => !answers[q.id]);
     if (unanswered.length > 0) {
       setSubmitError(
@@ -40,24 +94,27 @@ export default function QuizPage() {
       );
       return;
     }
-
     setSubmitError(null);
-    setSubmitting(true);
-
-    try {
-      const { data } = await quizApi.submit(chapterId, answers);
-      setResult(data);
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? "Failed to submit quiz. Please try again.";
-      setSubmitError(message);
-    } finally {
-      setSubmitting(false);
-    }
+    await doSubmit(answers);
   }
 
-  // ── Loading / error states ──────────────────────────────────────────────────
+  function handleRetry() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    submittedRef.current = false;
+    queryClient.removeQueries({ queryKey: [...KEYS.quiz(chapterId ?? ""), retryKey] });
+    setResult(null);
+    setAnswers({});
+    setSubmitError(null);
+    setRetryKey((k) => k + 1);
+  }
+
+  // Timer colour
+  const timerColor =
+    timeLeft > 60 ? "text-green-400" :
+    timeLeft > 30 ? "text-yellow-400" :
+                    "text-red-400";
+
+  // ── Loading / error ─────────────────────────────────────────────────────────
 
   if (isLoading) return <QuizPageSkeleton />;
 
@@ -148,7 +205,7 @@ export default function QuizPage() {
                 {/* Options */}
                 <div className="ml-9 space-y-1 mb-3">
                   {q.options.map((opt) => {
-                    const isYours = qResult?.your_answer === opt.id;
+                    const isYours         = qResult?.your_answer === opt.id;
                     const isCorrectAnswer = qResult?.correct_answer === opt.id;
                     return (
                       <div
@@ -163,14 +220,10 @@ export default function QuizPage() {
                       >
                         {opt.text}
                         {isCorrectAnswer && (
-                          <span className="ml-2 text-xs text-green-400">
-                            (correct)
-                          </span>
+                          <span className="ml-2 text-xs text-green-400">(correct)</span>
                         )}
                         {isYours && !isCorrectAnswer && (
-                          <span className="ml-2 text-xs text-red-400">
-                            (your answer)
-                          </span>
+                          <span className="ml-2 text-xs text-red-400">(your answer)</span>
                         )}
                       </div>
                     );
@@ -202,10 +255,7 @@ export default function QuizPage() {
             All Chapters
           </Link>
           <button
-            onClick={() => {
-              setResult(null);
-              setAnswers({});
-            }}
+            onClick={handleRetry}
             className="text-sm text-gray-400 hover:text-gray-200 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-lg transition"
           >
             Retry Quiz
@@ -219,6 +269,8 @@ export default function QuizPage() {
 
   const answeredCount = Object.keys(answers).length;
   const totalCount    = quiz.questions.length;
+  const mins          = Math.floor(timeLeft / 60);
+  const secs          = timeLeft % 60;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -229,10 +281,15 @@ export default function QuizPage() {
           {answeredCount}/{totalCount} answered
         </span>
       </div>
-      <p className="text-gray-400 text-sm mb-8">
-        Passing score: {quiz.passing_score}% ·{" "}
-        {quiz.quiz_type}
-      </p>
+      <div className="flex items-center justify-between mb-8">
+        <p className="text-gray-400 text-sm">
+          Passing score: {quiz.passing_score}% · {quiz.quiz_type}
+        </p>
+        {/* Countdown timer */}
+        <span className={`text-sm font-mono font-semibold tabular-nums ${timerColor}`}>
+          ⏱ {mins}:{secs.toString().padStart(2, "0")}
+        </span>
+      </div>
 
       {/* Progress bar */}
       <div className="w-full bg-gray-800 rounded-full h-1.5 mb-8">

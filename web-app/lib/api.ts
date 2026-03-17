@@ -29,11 +29,15 @@ import {
   DEMO_REFRESH_TOKEN,
   DEMO_CHAPTERS,
   DEMO_CHAPTER_CONTENT,
-  DEMO_QUIZ_DATA,
-  DEMO_QUIZ_RESULTS,
+  DEMO_QUIZ_SETS,
   DEMO_PROGRESS_SUMMARY,
   DEMO_ANALYTICS,
+  type DemoQuizQuestion,
 } from "./demo";
+
+// Stores the active quiz set for the current chapter so quizApi.submit can
+// score answers against the same set that quizApi.get returned.
+const _currentDemoQuiz: Record<string, DemoQuizQuestion[]> = {};
 
 // Use NEXT_PUBLIC_API_URL for explicit overrides (e.g. local dev direct calls).
 // Defaults to /api/v1 (relative) so Vercel's rewrite proxy forwards to the backend —
@@ -236,13 +240,55 @@ if (DEMO_MODE) {
   };
 
   quizApi.get = (chapterId: string) => {
-    const shuffle = <T>(arr: T[]): T[] =>
-      [...arr].sort(() => Math.random() - 0.5);
-    const base = { ...((DEMO_QUIZ_DATA[chapterId] ?? DEMO_QUIZ_DATA["ch1"]) as QuizPublic) };
-    base.questions = shuffle(base.questions).map((q) => ({ ...q, options: shuffle(q.options) }));
-    return ok(base);
+    const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+    const sets = DEMO_QUIZ_SETS[chapterId] ?? DEMO_QUIZ_SETS["ch1"];
+    const chosenSet = sets[Math.floor(Math.random() * sets.length)];
+    // Shuffle questions and options, but preserve correct/explanation for scoring
+    const shuffledQuestions = shuffle(chosenSet).map((q) => ({
+      ...q,
+      options: shuffle(q.options),
+    }));
+    _currentDemoQuiz[chapterId] = shuffledQuestions;
+    // Strip correct/explanation before sending to the frontend
+    const publicQuestions = shuffledQuestions.map(({ correct: _c, explanation: _e, ...rest }) => rest);
+    return ok({
+      id:            `quiz-${chapterId}`,
+      chapter_id:    chapterId,
+      title:         `Chapter Quiz`,
+      quiz_type:     "mcq",
+      passing_score: 70,
+      questions:     publicQuestions,
+    } as QuizPublic);
   };
-  quizApi.submit = (chapterId: string) => ok((DEMO_QUIZ_RESULTS[chapterId] ?? DEMO_QUIZ_RESULTS["ch1"]) as QuizResult);
+  quizApi.submit = (chapterId: string, answers: Record<string, string>) => {
+    const questions = _currentDemoQuiz[chapterId] ?? [];
+    let correct_count = 0;
+    const results = questions.map((q) => {
+      const your_answer   = answers[q.id] ?? "";
+      const is_correct    = your_answer === q.correct;
+      if (is_correct) correct_count++;
+      return {
+        question_id:    q.id,
+        correct:        is_correct,
+        your_answer,
+        correct_answer: q.correct,
+        explanation:    q.explanation,
+      };
+    });
+    const total     = questions.length || 1;
+    const score     = correct_count / total;
+    const passed    = score >= 0.7;
+    return ok({
+      quiz_id:          `quiz-${chapterId}`,
+      chapter_id:        chapterId,
+      score,
+      passed,
+      correct_count,
+      total_questions:   total,
+      passing_score:     0.7,
+      results,
+    } as QuizResult);
+  };
 
   progressApi.summary   = () => ok(DEMO_PROGRESS_SUMMARY as ProgressSummary);
   progressApi.analytics = () => ok(DEMO_ANALYTICS as ProgressAnalytics);
