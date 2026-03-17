@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Brain, Shield, Zap, GraduationCap, Check } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { DEMO_MODE, DEMO_TOKEN, DEMO_REFRESH_TOKEN } from "@/lib/demo";
 
 const FREE_PERKS = [
   "Chapters 1–3 completely free",
@@ -33,9 +34,11 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const { data } = await authApi.register({ email, password });
-      localStorage.setItem("access_token",  data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      document.cookie = `access_token=${data.access_token}; path=/`;
+      const accessToken  = DEMO_MODE ? DEMO_TOKEN         : data.access_token;
+      const refreshToken = DEMO_MODE ? DEMO_REFRESH_TOKEN  : data.refresh_token;
+      localStorage.setItem("access_token",  accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
+      document.cookie = `access_token=${accessToken}; path=/`;
       setUser(data.user);
       router.replace("/dashboard");
     } catch (err: unknown) {

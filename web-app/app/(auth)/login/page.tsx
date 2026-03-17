@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Brain, BookOpen, Zap, BarChart3, GraduationCap } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { DEMO_MODE, DEMO_TOKEN, DEMO_REFRESH_TOKEN } from "@/lib/demo";
 
 const PERKS = [
   { icon: <BookOpen size={15} />, text: "5 structured chapters — 100 min total" },
@@ -32,9 +33,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await authApi.login({ email, password });
-      localStorage.setItem("access_token",  data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      document.cookie = `access_token=${data.access_token}; path=/`;
+      const accessToken  = DEMO_MODE ? DEMO_TOKEN         : data.access_token;
+      const refreshToken = DEMO_MODE ? DEMO_REFRESH_TOKEN  : data.refresh_token;
+      localStorage.setItem("access_token",  accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
+      document.cookie = `access_token=${accessToken}; path=/`;
       setUser(data.user);
       router.replace("/dashboard");
     } catch (err: unknown) {

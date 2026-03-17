@@ -22,6 +22,18 @@ import type {
   TutorResponse,
   GenerateCourseResponse,
 } from "./types";
+import {
+  DEMO_MODE,
+  DEMO_USER,
+  DEMO_TOKEN,
+  DEMO_REFRESH_TOKEN,
+  DEMO_CHAPTERS,
+  DEMO_CHAPTER_CONTENT,
+  DEMO_QUIZ_DATA,
+  DEMO_QUIZ_RESULT,
+  DEMO_PROGRESS_SUMMARY,
+  DEMO_ANALYTICS,
+} from "./demo";
 
 // Use NEXT_PUBLIC_API_URL for explicit overrides (e.g. local dev direct calls).
 // Defaults to /api/v1 (relative) so Vercel's rewrite proxy forwards to the backend —
@@ -70,6 +82,12 @@ api.interceptors.response.use(
 
     _refreshing = true;
     const refreshToken = localStorage.getItem("refresh_token");
+
+    // In demo mode never redirect — just silently reject so React Query shows an error state
+    if (DEMO_MODE) {
+      _refreshing = false;
+      return Promise.reject(error);
+    }
 
     if (!refreshToken) {
       _refreshing = false;
@@ -194,3 +212,38 @@ export const aiApi = {
   generateCourse: (topic: string) =>
     api.post<GenerateCourseResponse>("/ai/generate-course", { topic }),
 };
+
+// ── Demo mode overrides ───────────────────────────────────────────────────────
+// When DEMO_MODE is true every API call is intercepted and returns local mock
+// data. No network requests reach the backend. Set DEMO_MODE = false in
+// lib/demo.ts to restore real API calls.
+
+if (DEMO_MODE) {
+  const ok = <T>(data: T) =>
+    Promise.resolve({ data, status: 200, statusText: "OK", headers: {}, config: {} as never });
+
+  authApi.login    = () => ok({ access_token: DEMO_TOKEN, refresh_token: DEMO_REFRESH_TOKEN, token_type: "bearer", expires_in: 3600, user: DEMO_USER });
+  authApi.register = () => ok({ access_token: DEMO_TOKEN, refresh_token: DEMO_REFRESH_TOKEN, token_type: "bearer", expires_in: 3600, user: DEMO_USER });
+  authApi.me       = () => ok(DEMO_USER);
+  authApi.refresh  = () => ok({ access_token: DEMO_TOKEN, refresh_token: DEMO_REFRESH_TOKEN, token_type: "bearer", expires_in: 3600, user: DEMO_USER });
+  authApi.logout   = () => ok(undefined);
+
+  chaptersApi.list = () => ok(DEMO_CHAPTERS as ChapterSummary[]);
+  chaptersApi.get  = (slugOrId: string) => {
+    const ch = DEMO_CHAPTERS.find((c) => c.id === slugOrId || c.slug === slugOrId);
+    if (!ch) return Promise.reject(new Error("Chapter not found"));
+    return ok({ ...ch, content_md: DEMO_CHAPTER_CONTENT[ch.id] ?? "# Demo Chapter\n\nContent coming soon.", updated_at: new Date().toISOString() } as ChapterDetail);
+  };
+
+  quizApi.get    = (chapterId: string) => ok((DEMO_QUIZ_DATA[chapterId] ?? DEMO_QUIZ_DATA["ch1"]) as QuizPublic);
+  quizApi.submit = () => ok(DEMO_QUIZ_RESULT as QuizResult);
+
+  progressApi.summary   = () => ok(DEMO_PROGRESS_SUMMARY as ProgressSummary);
+  progressApi.analytics = () => ok(DEMO_ANALYTICS as ProgressAnalytics);
+  progressApi.update    = () => ok({ user_id: "demo-user-001", chapter_id: "", status: "in_progress", quiz_score: null, quiz_passed: null, updated_at: null } as ProgressResponse);
+
+  searchApi.search = (q: string) => ok({
+    query: q, total: 2,
+    results: DEMO_CHAPTERS.slice(0, 2).map((c) => ({ id: c.id, number: c.number, title: c.title, summary: c.summary, matched_in: "title", relevance: 0.9, locked: c.locked })),
+  } as SearchResponse);
+}
