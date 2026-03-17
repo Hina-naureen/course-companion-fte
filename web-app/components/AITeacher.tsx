@@ -151,10 +151,11 @@ function TeacherAvatar({ isSpeaking }: { isSpeaking: boolean }) {
 
         {/* ── Core orb ── */}
         <motion.div
-          className="relative rounded-full overflow-hidden"
+          className="relative rounded-full"
           style={{
             width: 148,
             height: 148,
+            flexShrink: 0,
             background:
               "radial-gradient(circle at 38% 30%, #818cf8 0%, #4f46e5 28%, #1e1b4b 62%, #07050f 100%)",
           }}
