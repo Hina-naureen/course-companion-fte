@@ -149,8 +149,9 @@ export interface AccessCheckResponse {
 // ── Feature 1: AI Tutor Chat ──────────────────────────────────────────────────
 
 export interface TutorMessage {
-  role:    "user" | "assistant";
-  content: string;
+  role:      "user" | "assistant";
+  content:   string;
+  isSystem?: boolean;
 }
 
 export interface TutorResponse {

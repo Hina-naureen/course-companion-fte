@@ -298,4 +298,5 @@ if (DEMO_MODE) {
     query: q, total: 2,
     results: DEMO_CHAPTERS.slice(0, 2).map((c) => ({ id: c.id, number: c.number, title: c.title, summary: c.summary, matched_in: "title", relevance: 0.9, locked: c.locked })),
   } as SearchResponse);
+
 }

@@ -9,6 +9,19 @@ interface Props {
   chapterId: string;
 }
 
+// ── Demo limit ────────────────────────────────────────────────────────────────
+const AI_QUESTION_LIMIT_KEY = "ai_question_count";
+const AI_QUESTION_MAX       = 2;
+const DEMO_LIMIT_MSG        = "Demo limit reached. This is a demo version. Please upgrade to continue.";
+
+function getQuestionCount(): number {
+  if (typeof window === "undefined") return 0;
+  return parseInt(localStorage.getItem(AI_QUESTION_LIMIT_KEY) ?? "0", 10);
+}
+function incrementQuestionCount(): void {
+  localStorage.setItem(AI_QUESTION_LIMIT_KEY, String(getQuestionCount() + 1));
+}
+
 // ── Sound bar amplitudes — bell-curve shape so centre bars are tallest ────────
 const SOUND_AMPS  = [0.20, 0.45, 0.75, 0.55, 1.0, 0.65, 1.2, 0.85, 1.1, 0.60, 0.95, 0.70, 1.15, 0.50, 0.25];
 // Slower per-bar durations → smooth, musical movement instead of jitter
@@ -323,7 +336,25 @@ function TeacherAvatar({ isSpeaking }: { isSpeaking: boolean }) {
 // ── Message bubble ────────────────────────────────────────────────────────────
 
 function Bubble({ msg, audioUrl }: { msg: TutorMessage; audioUrl?: string | null }) {
-  const isUser = msg.role === "user";
+  const isUser   = msg.role === "user";
+  const isSystem = msg.isSystem === true;
+
+  if (isSystem) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 360, damping: 28 }}
+        className="flex justify-center"
+      >
+        <div className="flex items-center gap-2 max-w-[90%] rounded-xl px-4 py-2.5 text-xs text-gray-400 bg-gray-800/40 border border-gray-700/40 shadow-sm">
+          <span className="text-amber-400 text-sm">⚠️</span>
+          <span>{msg.content}</span>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.97 }}
@@ -399,6 +430,7 @@ export default function AITeacher({ chapterId }: Props) {
   const [loading,        setLoading]        = useState(false);
   const [isSpeaking,     setIsSpeaking]     = useState(false);
   const [error,          setError]          = useState<string | null>(null);
+  const [questionCount,  setQuestionCount]  = useState<number>(() => getQuestionCount());
 
   const audioRef  = useRef<HTMLAudioElement | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -446,10 +478,20 @@ export default function AITeacher({ chapterId }: Props) {
     setInput("");
     setError(null);
     setMessages((p) => [...p, { role: "user", content: question }]);
+
+    // ── Demo limit check ──────────────────────────────────────────────────────
+    const currentCount = getQuestionCount();
+    if (currentCount >= AI_QUESTION_MAX) {
+      setMessages((p) => [...p, { role: "assistant", content: DEMO_LIMIT_MSG, isSystem: true }]);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data } = await aiApi.askTutor(chapterId, question);
+      incrementQuestionCount();
+      setQuestionCount(getQuestionCount());
       setMessages((p) => [...p, { role: "assistant", content: data.answer }]);
       setLatestAnswer(data.answer);
 
@@ -467,13 +509,14 @@ export default function AITeacher({ chapterId }: Props) {
         ? (rawDetail as { msg: string }[]).map((e) => e.msg).join(", ")
         : typeof rawDetail === "string" ? rawDetail : undefined;
       let msg: string;
-      if (status === 422) msg = `⚠️ Validation: ${detail ?? "Invalid request. Check your question."}`;
-      else if (status === 402 || status === 429) msg = `💳 ${detail ?? "API credits exhausted."}`;
-      else if (status === 503) msg = `🔧 ${detail ?? "AI service temporarily unavailable."}`;
-      else if (status === 500) msg = `⚠️ ${detail ?? "Server error. Check backend logs."}`;
-      else if (status === 401 || status === 403) msg = "🔒 Authentication error. Please log in again.";
-      else if (!status) msg = "❌ Cannot reach the backend — make sure it is running on port 8000.";
-      else msg = `❌ Unexpected error (${status}). Please try again.`;
+      if (status === 404)              msg = "AI tutor is not available in this demo. Upgrade to the full version to chat with Aria.";
+      else if (status === 422)         msg = `Invalid request — ${detail ?? "please rephrase your question."}`;
+      else if (status === 402 || status === 429) msg = "You've reached the usage limit. Please upgrade to continue.";
+      else if (status === 503)         msg = "Aria is temporarily unavailable. Please try again in a moment.";
+      else if (status === 500)         msg = "Something went wrong on our end. Please try again.";
+      else if (status === 401 || status === 403) msg = "Session expired — please log in again.";
+      else if (!status)                msg = "Cannot reach Aria right now. Please check your connection and try again.";
+      else                             msg = "Something went wrong. Please try again.";
       setError(msg);
       setMessages((p) => p.slice(0, -1));
       setInput(question);
@@ -499,7 +542,7 @@ export default function AITeacher({ chapterId }: Props) {
           transition={{ duration: 2, repeat: Infinity }}
         />
         <p className="text-sm font-semibold text-indigo-200">AI Teacher — Aria</p>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           {isSpeaking && (
             <motion.span
               initial={{ opacity: 0 }}
@@ -509,6 +552,21 @@ export default function AITeacher({ chapterId }: Props) {
               ● Speaking
             </motion.span>
           )}
+          <span className={`text-xs font-medium tabular-nums ${questionCount >= AI_QUESTION_MAX ? "text-amber-400" : "text-indigo-400/60"}`}>
+            {questionCount}/{AI_QUESTION_MAX} questions
+          </span>
+          {questionCount > 0 && (
+            <button
+              onClick={() => {
+                localStorage.removeItem(AI_QUESTION_LIMIT_KEY);
+                setQuestionCount(0);
+              }}
+              className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+              title="Reset demo limit (testing)"
+            >
+              reset
+            </button>
+          )}
           <span className="text-xs text-indigo-400/50">Gemini · Voice</span>
         </div>
       </div>
@@ -516,7 +574,7 @@ export default function AITeacher({ chapterId }: Props) {
       {/* Body */}
       <div className="flex flex-col lg:flex-row min-h-[480px]">
         {/* Avatar panel */}
-        <div className="lg:w-56 shrink-0 flex flex-col items-center justify-center py-8 px-4 border-b lg:border-b-0 lg:border-r border-indigo-900/20 bg-gradient-to-b from-indigo-950/20 to-transparent">
+        <div className="lg:w-80 shrink-0 flex flex-col items-center justify-center py-10 px-6 border-b lg:border-b-0 lg:border-r border-indigo-900/20 bg-gradient-to-b from-indigo-950/20 to-transparent">
           <TeacherAvatar isSpeaking={isSpeaking} />
         </div>
 
