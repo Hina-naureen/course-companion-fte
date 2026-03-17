@@ -70,7 +70,6 @@ async def ai_tutor(
     request: Request,
     body: TutorRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     """
     1. Resolves the chapter (UUID or slug).
