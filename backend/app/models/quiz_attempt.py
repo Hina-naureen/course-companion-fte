@@ -12,10 +12,12 @@ class QuizAttempt(Base):
         Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
+        index=True,
     )
     quiz_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False,
+        index=True,
     )
     answers: Mapped[dict] = mapped_column(JSON, nullable=False)
     score: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -110,35 +110,39 @@ async def get_analytics(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),  # available to all tiers
 ):
-    # Quiz attempt history
-    attempts_result = await db.execute(
-        select(QuizAttempt)
+    # AVG score and count in one aggregate query (no row-by-row Python summing)
+    avg_result = await db.execute(
+        select(func.avg(QuizAttempt.score), func.count(QuizAttempt.id))
         .where(QuizAttempt.user_id == current_user.id)
-        .order_by(QuizAttempt.attempted_at.desc())
-        .limit(50)
     )
-    attempts = attempts_result.scalars().all()
+    avg_score_raw, _ = avg_result.one()
+    avg_score = round(avg_score_raw) if avg_score_raw is not None else 0
 
-    avg_score = round(sum(a.score for a in attempts) / len(attempts)) if attempts else 0
+    # Total chapter count — scalar, no full table scan in Python
+    total_result   = await db.execute(select(func.count()).select_from(Chapter))
+    total_chapters = total_result.scalar() or 0
 
-    quiz_history = [
-        QuizHistoryItem(quiz_id=a.quiz_id, score=a.score, date=a.attempted_at)
-        for a in attempts[:20]
-    ]
-
-    # Chapter progress
-    all_chapters_result = await db.execute(select(Chapter).order_by(Chapter.number))
-    all_chapters = all_chapters_result.scalars().all()
-    total_chapters = len(all_chapters)
-
+    # Completed chapter count — COUNT in SQL, not len(rows) in Python
     completed_result = await db.execute(
-        select(Progress)
+        select(func.count())
+        .select_from(Progress)
         .where(Progress.user_id == current_user.id, Progress.status == "completed")
     )
-    completed_rows = completed_result.scalars().all()
-    completed_count = len(completed_rows)
-    completion_pct = round((completed_count / total_chapters) * 100) if total_chapters > 0 else 0
-    time_spent = completed_count * 15  # estimate 15 mins per completed chapter
+    completed_count = completed_result.scalar() or 0
+    completion_pct  = round((completed_count / total_chapters) * 100) if total_chapters > 0 else 0
+    time_spent      = completed_count * 15  # estimate 15 mins per completed chapter
+
+    # Recent quiz history — only the columns we need
+    history_result = await db.execute(
+        select(QuizAttempt.quiz_id, QuizAttempt.score, QuizAttempt.attempted_at)
+        .where(QuizAttempt.user_id == current_user.id)
+        .order_by(QuizAttempt.attempted_at.desc())
+        .limit(20)
+    )
+    quiz_history = [
+        QuizHistoryItem(quiz_id=row.quiz_id, score=row.score, date=row.attempted_at)
+        for row in history_result.all()
+    ]
 
     return ProgressAnalytics(
         completed_chapters=completed_count,

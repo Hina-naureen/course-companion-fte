@@ -1,30 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { quizApi } from "@/lib/api";
+import { KEYS } from "@/lib/query-client";
+import { QuizPageSkeleton } from "@/components/skeletons";
 import type { QuizPublic, QuizResult } from "@/lib/types";
 
 export default function QuizPage() {
   const { chapterId } = useParams<{ chapterId: string }>();
 
-  const [quiz, setQuiz] = useState<QuizPublic | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<QuizResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [answers,     setAnswers]     = useState<Record<string, string>>({});
+  const [result,      setResult]      = useState<QuizResult | null>(null);
+  const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!chapterId) return;
-    quizApi
-      .get(chapterId)
-      .then((res) => setQuiz(res.data))
-      .catch(() => setError("Failed to load quiz. It may not exist for this chapter."))
-      .finally(() => setLoading(false));
-  }, [chapterId]);
+  // React Query caches quiz data — revisiting the page after answering and
+  // going back skips the network call.
+  const { data: quiz, isLoading, isError } = useQuery<QuizPublic>({
+    queryKey: KEYS.quiz(chapterId ?? ""),
+    queryFn:  () => quizApi.get(chapterId!).then((r) => r.data),
+    enabled:  !!chapterId,
+    staleTime: 10 * 60 * 1000, // quiz questions don't change often
+  });
 
   function handleSelect(questionId: string, optionId: string) {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -59,14 +59,16 @@ export default function QuizPage() {
 
   // ── Loading / error states ──────────────────────────────────────────────────
 
-  if (loading) {
-    return <p className="text-gray-400 py-20 text-center">Loading quiz…</p>;
-  }
+  if (isLoading) return <QuizPageSkeleton />;
 
-  if (error || !quiz) {
+  if (isError || !quiz) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-400 mb-4">{error ?? "Quiz not found."}</p>
+        <p className="text-red-400 mb-4">
+          {isError
+            ? "Failed to load quiz. It may not exist for this chapter."
+            : "Quiz not found."}
+        </p>
         <Link href="/chapters" className="text-blue-400 hover:text-blue-300">
           ← Back to chapters
         </Link>
@@ -77,7 +79,7 @@ export default function QuizPage() {
   // ── Results view ────────────────────────────────────────────────────────────
 
   if (result) {
-    const percentage = Math.round((result.score) * 100);
+    const percentage = Math.round(result.score * 100);
     return (
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold mb-2">{quiz.title}</h1>
@@ -216,7 +218,7 @@ export default function QuizPage() {
   // ── Quiz form ───────────────────────────────────────────────────────────────
 
   const answeredCount = Object.keys(answers).length;
-  const totalCount = quiz.questions.length;
+  const totalCount    = quiz.questions.length;
 
   return (
     <div className="max-w-3xl mx-auto">

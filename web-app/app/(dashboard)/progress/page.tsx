@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { progressApi, chaptersApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { KEYS } from "@/lib/query-client";
+import { ProgressPageSkeleton } from "@/components/skeletons";
 import type { ProgressSummary, ChapterSummary, ProgressStatus, ProgressAnalytics } from "@/lib/types";
 import {
   TrendingUp, Trophy, Target, Clock,
@@ -23,45 +25,36 @@ const STATUS_CONFIG: Record<ProgressStatus, { label: string; dot: string; badge:
 export default function ProgressPage() {
   const { user } = useAuthStore();
 
-  const [summary,   setSummary]   = useState<ProgressSummary | null>(null);
-  const [analytics, setAnalytics] = useState<ProgressAnalytics | null>(null);
-  const [chapters,  setChapters]  = useState<ChapterSummary[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState<string | null>(null);
+  // Reuses the cached chapters list from Dashboard/Chapters page — zero extra network call
+  // when the user has visited those pages within the last 5 minutes.
+  const { data: chapters = [], isLoading: chaptersLoading } = useQuery<ChapterSummary[]>({
+    queryKey: KEYS.chapters,
+    queryFn:  async () => {
+      const res = await chaptersApi.list();
+      const raw = res.data as unknown;
+      return Array.isArray(raw)
+        ? (raw as ChapterSummary[])
+        : ((raw as { chapters: ChapterSummary[] }).chapters ?? []);
+    },
+  });
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [chaptersRes, progressRes, analyticsRes] = await Promise.all([
-          chaptersApi.list(),
-          progressApi.summary(),
-          progressApi.analytics().catch(() => null),  // non-fatal
-        ]);
-        const raw = chaptersRes.data as unknown;
-        const list: ChapterSummary[] = Array.isArray(raw)
-          ? (raw as ChapterSummary[])
-          : ((raw as { chapters: ChapterSummary[] }).chapters ?? []);
-        setChapters(list);
-        setSummary(progressRes.data);
-        if (analyticsRes) setAnalytics(analyticsRes.data);
-      } catch {
-        setError("Failed to load progress data.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const { data: summary, isLoading: summaryLoading } = useQuery<ProgressSummary>({
+    queryKey: KEYS.progress,
+    queryFn:  () => progressApi.summary().then((r) => r.data),
+    staleTime: 30 * 1000,
+    retry:    false,
+  });
 
-  if (loading) {
-    return (
-      <div className="py-20 flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-        <p className="text-gray-500 text-sm">Loading your progress…</p>
-      </div>
-    );
-  }
-  if (error) return <div className="py-20 text-center text-red-400">{error}</div>;
+  const { data: analytics } = useQuery<ProgressAnalytics>({
+    queryKey: KEYS.analytics,
+    queryFn:  () => progressApi.analytics().then((r) => r.data),
+    staleTime: 60 * 1000,
+    retry:    false,
+  });
+
+  // Show skeleton only on first load (no cached data yet)
+  const isLoading = (chaptersLoading && chapters.length === 0) || (summaryLoading && !summary);
+  if (isLoading) return <ProgressPageSkeleton />;
 
   const total         = chapters.length || 1;
   const completed     = summary?.chapters_completed ?? 0;

@@ -3,10 +3,12 @@ import { QueryClient } from "@tanstack/react-query";
 // Shared query keys — any page using the same key hits the same cache.
 // Dashboard + Chapters page both use KEYS.chapters → only one network request.
 export const KEYS = {
-  me:       ["me"]               as const,
-  chapters: ["chapters"]         as const,
-  progress: ["progress-summary"] as const,
-  chapter:  (id: string) => ["chapter", id] as const,
+  me:        ["me"]                as const,
+  chapters:  ["chapters"]          as const,
+  progress:  ["progress-summary"]  as const,
+  analytics: ["progress-analytics"] as const,
+  chapter:   (id: string) => ["chapter", id] as const,
+  quiz:      (id: string) => ["quiz",    id] as const,
 } as const;
 
 export function makeQueryClient() {

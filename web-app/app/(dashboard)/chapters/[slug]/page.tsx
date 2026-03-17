@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { useQuery } from "@tanstack/react-query";
 import { chaptersApi, progressApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import type { ChapterDetail } from "@/lib/types";
-import type { AxiosResponse } from "axios";
+import { KEYS } from "@/lib/query-client";
 import AITeacher from "@/components/AITeacher";
 import { ChapterDetailSkeleton } from "@/components/skeletons";
 
@@ -15,37 +15,31 @@ export default function ChapterDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
 
-  const [chapter, setChapter] = useState<ChapterDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query caches chapter content — navigating away and back is instant.
+  const { data: chapter, isLoading, isError } = useQuery({
+    queryKey: KEYS.chapter(slug ?? ""),
+    queryFn:  () => chaptersApi.get(slug!).then((r) => r.data),
+    enabled:  !!slug,
+    staleTime: 5 * 60 * 1000, // chapter content rarely changes
+  });
 
+  // Fire-and-forget: mark chapter as in_progress.
+  // Depends on stable primitives (not the full user object) to avoid
+  // re-firing when authApi.me() syncs the user profile into the store.
   useEffect(() => {
-    if (!slug) return;
+    if (chapter?.id && user?.user_id) {
+      progressApi.update(user.user_id, chapter.id, "in_progress").catch(() => {});
+    }
+  }, [chapter?.id, user?.user_id]);
 
-    chaptersApi
-      .get(slug)
-      .then(async (res: AxiosResponse<ChapterDetail>) => {
-        setChapter(res.data);
+  if (isLoading) return <ChapterDetailSkeleton />;
 
-        // Mark chapter as in_progress
-        if (user?.user_id) {
-          try {
-            await progressApi.update(user.user_id, res.data.id, "in_progress");
-          } catch {
-            // Progress update is best-effort; don't block reading
-          }
-        }
-      })
-      .catch(() => setError("Failed to load chapter. It may not exist or you may not have access."))
-      .finally(() => setLoading(false));
-  }, [slug, user]);
-
-  if (loading) return <ChapterDetailSkeleton />;
-
-  if (error || !chapter) {
+  if (isError || !chapter) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-400 mb-4">{error ?? "Chapter not found."}</p>
+        <p className="text-red-400 mb-4">
+          Failed to load chapter. It may not exist or you may not have access.
+        </p>
         <Link href="/chapters" className="text-blue-400 hover:text-blue-300">
           ← Back to chapters
         </Link>

@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -82,7 +84,6 @@ async def get_chapter(
 ):
     # Support lookup by UUID or slug
     try:
-        import uuid
         uid = uuid.UUID(chapter_id)
         result = await db.execute(select(Chapter).where(Chapter.id == uid))
     except ValueError:
@@ -127,7 +128,6 @@ async def get_chapter_quiz(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        import uuid
         uid = uuid.UUID(chapter_id)
         ch_result = await db.execute(select(Chapter).where(Chapter.id == uid))
     except ValueError:

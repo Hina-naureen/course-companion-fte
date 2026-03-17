@@ -12,7 +12,8 @@ class Quiz(Base):
         Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     chapter_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
     quiz_type: Mapped[str] = mapped_column(String, nullable=False, default="mcq")
