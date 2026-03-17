@@ -279,13 +279,13 @@ if (DEMO_MODE) {
     const score     = correct_count / total;
     const passed    = score >= 0.7;
     return ok({
-      quiz_id:          `quiz-${chapterId}`,
-      chapter_id:        chapterId,
+      chapter_id:      chapterId,
+      user_id:         "demo-user-001",
       score,
       passed,
       correct_count,
-      total_questions:   total,
-      passing_score:     0.7,
+      total_questions: total,
+      passing_score:   0.7,
       results,
     } as QuizResult);
   };
