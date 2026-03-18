@@ -208,18 +208,18 @@ export const accessApi = {
 // ── Feature 1 & 4: AI endpoints ───────────────────────────────────────────────
 
 export const aiApi = {
-  // Feature 1: AI Tutor — ask a question about a chapter
-  
-    askTutor: (chapter_id: string, question: string) =>
-  fetch("/api/ai/tutor", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ chapter_id, question }),
-  }).then(res => res.json()),
+  // Feature 1: AI Tutor
+  askTutor: (chapter_id: string, question: string) => (
+    fetch("/api/ai/tutor", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ chapter_id, question }),
+    }).then((res) => res.json())
+  ),
 
-  // Feature 4: Generate a course from a topic
+  // Feature 4
   generateCourse: (topic: string) =>
     api.post<GenerateCourseResponse>("/ai/generate-course", { topic }),
 };
