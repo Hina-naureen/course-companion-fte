@@ -316,10 +316,16 @@ if (DEMO_MODE) {
     ch5: "building-with-generative-ai",
   };
 
+  // Use a relative fetch (never axios) so the request always goes through
+  // the Next.js same-origin proxy — no CORS regardless of NEXT_PUBLIC_API_URL.
   aiApi.askTutor = (chapter_id: string, question: string) =>
-    api.post<TutorResponse>("/ai/tutor", {
-      chapter_id: DEMO_ID_TO_SLUG[chapter_id] ?? chapter_id,
-      question,
-    });
+    fetch("/api/v1/ai/tutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chapter_id: DEMO_ID_TO_SLUG[chapter_id] ?? chapter_id,
+        question,
+      }),
+    }).then((res) => res.json());
 
 }
