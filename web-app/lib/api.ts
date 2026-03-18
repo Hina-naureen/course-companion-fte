@@ -299,4 +299,20 @@ if (DEMO_MODE) {
     results: DEMO_CHAPTERS.slice(0, 2).map((c) => ({ id: c.id, number: c.number, title: c.title, summary: c.summary, matched_in: "title", relevance: 0.9, locked: c.locked })),
   } as SearchResponse);
 
+  // Map demo chapter ids ("ch1"…"ch5") to the real DB slugs so the backend
+  // can resolve the chapter for AI tutor calls while demo mode is active.
+  const DEMO_ID_TO_SLUG: Record<string, string> = {
+    ch1: "what-is-generative-ai",
+    ch2: "how-llms-work",
+    ch3: "prompt-engineering",
+    ch4: "ai-ethics-and-responsible-use",
+    ch5: "building-with-generative-ai",
+  };
+
+  aiApi.askTutor = (chapter_id: string, question: string) =>
+    api.post<TutorResponse>("/ai/tutor", {
+      chapter_id: DEMO_ID_TO_SLUG[chapter_id] ?? chapter_id,
+      question,
+    });
+
 }
