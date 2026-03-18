@@ -208,11 +208,11 @@ export const accessApi = {
 // ── Feature 1 & 4: AI endpoints ───────────────────────────────────────────────
 
 export const aiApi = {
-  // Feature 1: AI Tutor — routes through Next.js /app/api/ai/tutor/route.ts
-  // (same-origin, server-side proxy to backend — zero CORS).
+  // Feature 1: AI Tutor — same-origin relative URL, handled by the
+  // next.config.ts rewrite: /api/:path* → BACKEND_URL/api/:path* (server-side).
   // Wrapped as { data } to match the axios response shape AITeacher expects.
   askTutor: (chapter_id: string, question: string) =>
-    fetch("/api/ai/tutor", {
+    fetch("/api/v1/ai/tutor", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chapter_id, question }),
@@ -315,11 +315,10 @@ if (DEMO_MODE) {
     ch5: "building-with-generative-ai",
   };
 
-  // Same path as the main definition (/api/ai/tutor → Next.js route → Render backend).
-  // Slug mapping converts demo IDs before forwarding. Wrapped as { data } to
-  // match the axios response shape AITeacher expects.
+  // Same rewrite path as the main definition — slug mapping converts demo IDs.
+  // Wrapped as { data } to match the axios response shape AITeacher expects.
   aiApi.askTutor = (chapter_id: string, question: string) =>
-    fetch("/api/ai/tutor", {
+    fetch("/api/v1/ai/tutor", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
